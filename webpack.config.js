@@ -1,21 +1,47 @@
 const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin')
+
+const isDesenvolvimento = process.env.NODE_ENV != 'production'
 
 module.exports = {
-    mode: 'development',
-    entry: path.resolve(__dirname, 'src', 'Index.jsx'),
+    mode: isDesenvolvimento ? 'development' : 'production',
+    devtool: isDesenvolvimento ? 'eval-source-map' : 'source-map',
+    entry: path.resolve(__dirname, 'src', 'Index.tsx'),
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: 'bundle.js'
     },
     resolve: {
-        extensions: ['.js', '.jsx'],
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
     },
+    devServer: {
+        static: path.resolve(__dirname, 'public'),
+    },
+    plugins: [
+        isDesenvolvimento && new ReactRefreshWebpackPlugin(),
+        new HtmlWebpackPlugin({
+            template: path.resolve(__dirname, 'public', 'index.html')
+        })
+    ].filter(Boolean),
     module: {
         rules: [
             {
-                test: /\.jsx$/,
+                test: /\.(j|t)sx$/,
                 exclude: /node_modules/,
-                use: 'babel-loader',
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        plugins: [
+                            isDesenvolvimento && require.resolve('react-refresh/babel')
+                        ].filter(Boolean)
+                    }
+                }
+            },
+            {
+                test: /\.scss$/,
+                exclude: /node_modules/,
+                use: ['style-loader', 'css-loader', 'sass-loader'],
             },
         ],
     }
